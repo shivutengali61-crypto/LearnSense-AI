@@ -1,0 +1,6 @@
+{
+  "name": "LearnSense",
+  "description": "AI-powered classroom learning and concept-level assessment platform for teachers and students.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

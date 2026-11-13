@@ -1,0 +1,569 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered teacher or student user profile linked to Firebase Auth.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["teacher", "student", "admin"] },
+        "preferredLanguage": { "type": "string", "enum": ["en", "kn"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "role", "createdAt"]
+    },
+    "TeacherAllowlistEntry": {
+      "title": "TeacherAllowlistEntry",
+      "description": "Admin-approved faculty email record authorizing Teacher role registration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "grantedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "grantedBy", "createdAt"]
+    },
+    "Classroom": {
+      "title": "Classroom",
+      "description": "Teacher-led classroom metadata and enrolled student UID membership.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "subject": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "gradeLevel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "courseCode": { "type": "string", "maxLength": 32 },
+        "semester": { "type": "string", "maxLength": 40 },
+        "credits": { "type": "number" },
+        "joinCode": { "type": "string", "minLength": 4, "maxLength": 16 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "studentUids": { "type": "array" },
+        "materialIds": { "type": "array" },
+        "publishedAssessmentIds": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "subject", "gradeLevel", "joinCode", "teacherUid", "teacherName", "studentUids", "createdAt"]
+    },
+    "ClassroomRosterEntry": {
+      "title": "ClassroomRosterEntry",
+      "description": "Private student PII roster record isolated in classroom subcollection.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "rollNumber": { "type": "string", "maxLength": 40 },
+        "enrolledAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "classroomId", "teacherUid", "name", "email", "enrolledAt"]
+    },
+    "ClassroomInvite": {
+      "title": "ClassroomInvite",
+      "description": "Publicly resolvable classroom join code mapping with zero student PII.",
+      "type": "object",
+      "properties": {
+        "joinCode": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "minLength": 4, "maxLength": 16 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "subject": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "gradeLevel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["joinCode", "classroomId", "classroomName", "subject", "gradeLevel", "teacherUid", "teacherName", "active", "createdAt"]
+    },
+    "StudyMaterial": {
+      "title": "StudyMaterial",
+      "description": "Uploaded PDF or study notes with extracted topics and subtopics.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUids": { "type": "array" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "fileUrl": { "type": "string", "maxLength": 500 },
+        "extractedText": { "type": "string", "maxLength": 100000 },
+        "extractionSource": { "type": "string", "enum": ["gemini_ai", "sarvam_ai", "local_pdf_parser", "manual"] },
+        "topics": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "teacherUid", "studentUids", "title", "fileName", "extractedText", "extractionSource", "topics", "createdAt"]
+    },
+    "Assessment": {
+      "title": "Assessment",
+      "description": "Teacher-only master assessment including drafts, pending AI questions, and answer keys.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 600 },
+        "status": { "type": "string", "enum": ["draft", "published", "closed"] },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "durationMinutes": { "type": "number" },
+        "allowRetakes": { "type": "boolean" },
+        "questions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "teacherUid", "title", "status", "durationMinutes", "questions", "createdAt"]
+    },
+    "PublishedAssessment": {
+      "title": "PublishedAssessment",
+      "description": "Student-safe published test projection containing only approved questions without answer keys.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUids": { "type": "array" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 600 },
+        "status": { "type": "string", "enum": ["published", "closed"] },
+        "dueDate": { "type": "string", "maxLength": 40 },
+        "durationMinutes": { "type": "number" },
+        "allowRetakes": { "type": "boolean" },
+        "questions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "teacherUid", "studentUids", "title", "status", "durationMinutes", "allowRetakes", "questions", "createdAt"]
+    },
+    "AssessmentAnswerKey": {
+      "title": "AssessmentAnswerKey",
+      "description": "Protected answer keys readable only by the owning teacher or an enrolled student post-submit lock.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "assessmentId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "allowRetakes": { "type": "boolean" },
+        "answers": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "assessmentId", "classroomId", "teacherUid", "allowRetakes", "answers", "createdAt"]
+    },
+    "SubmissionLock": {
+      "title": "SubmissionLock",
+      "description": "Immutable pre-evaluation answer commit lock enforcing duplicate protection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "assessmentId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "attemptNumber": { "type": "number" },
+        "answers": { "type": "object" },
+        "lockedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "assessmentId", "classroomId", "teacherUid", "studentUid", "attemptNumber", "answers", "lockedAt"]
+    },
+    "AssessmentSubmission": {
+      "title": "AssessmentSubmission",
+      "description": "Immutable evaluated student test attempt with concept-level evidence.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "assessmentId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "attemptNumber": { "type": "number" },
+        "evaluationStatus": { "type": "string", "enum": ["evaluated", "pending"] },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "percentage": { "type": "number" },
+        "elapsedSeconds": { "type": "number" },
+        "timedOut": { "type": "boolean" },
+        "responses": { "type": "array" },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "assessmentId", "classroomId", "teacherUid", "studentUid", "studentName", "attemptNumber", "evaluationStatus", "score", "maxScore", "percentage", "responses", "submittedAt"]
+    },
+    "ClassroomEnrollment": {
+      "title": "ClassroomEnrollment",
+      "description": "Explicit student-classroom enrollment mapping supporting real-time access verification.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "studentEmail": { "type": "string", "format": "email", "maxLength": 200 },
+        "joinCode": { "type": "string", "minLength": 4, "maxLength": 16 },
+        "status": { "type": "string", "enum": ["active"] },
+        "enrolledAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "teacherUid", "studentUid", "studentName", "studentEmail", "joinCode", "status", "enrolledAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Real-time 1:1 teacher-student or classroom-wide communication thread.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["direct", "classroom"] },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "studentUid": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 120 },
+        "participantUids": { "type": "array" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "lastMessageText": { "type": "string", "maxLength": 400 },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "lastSenderUid": { "type": "string", "maxLength": 128 },
+        "lastSenderName": { "type": "string", "maxLength": 120 },
+        "unreadCounts": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "classroomId", "classroomName", "teacherUid", "teacherName", "participantUids", "title", "lastMessageText", "lastMessageAt", "lastSenderUid", "lastSenderName", "unreadCounts", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message within a conversation with timestamp and read receipt tracking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "conversationId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "participantUids": { "type": "array" },
+        "senderUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "senderName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "senderRole": { "type": "string", "enum": ["teacher", "student", "admin"] },
+        "body": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "materialId": { "type": "string", "maxLength": 128 },
+        "materialTitle": { "type": "string", "maxLength": 160 },
+        "readBy": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "conversationId", "classroomId", "participantUids", "senderUid", "senderName", "senderRole", "body", "readBy", "createdAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Teacher-authored classroom announcement optionally linking study materials.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "studentUids": { "type": "array" },
+        "title": { "type": "string", "minLength": 3, "maxLength": 140 },
+        "body": { "type": "string", "minLength": 5, "maxLength": 3000 },
+        "materialId": { "type": "string", "maxLength": 128 },
+        "materialTitle": { "type": "string", "maxLength": 160 },
+        "priority": { "type": "string", "enum": ["normal", "important"] },
+        "acknowledgedBy": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "classroomName", "teacherUid", "teacherName", "studentUids", "title", "body", "priority", "acknowledgedBy", "createdAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Per-user real-time notification event for messages, announcements, materials, tests, and results.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "recipientUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "type": { "type": "string", "enum": ["teacher_message", "student_message", "announcement", "material_published", "assessment_published", "assessment_deadline", "assessment_result"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "body": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "targetTab": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "recipientUid", "actorUid", "actorName", "type", "title", "body", "classroomId", "targetTab", "targetId", "read", "createdAt"]
+    },
+    "AttendanceSession": {
+      "title": "AttendanceSession",
+      "description": "Classroom attendance roll session recording present, late, and absent status per enrolled student.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "sessionDate": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "topic": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "studentUids": { "type": "array" },
+        "records": { "type": "object" },
+        "presentCount": { "type": "number" },
+        "totalCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "classroomName", "teacherUid", "sessionDate", "topic", "studentUids", "records", "presentCount", "totalCount", "createdAt"]
+    },
+    "PersistedLessonPlan": {
+      "title": "PersistedLessonPlan",
+      "description": "Teacher-approved next lesson plan or Sarvam AI 30-minute reteach outline saved per classroom.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "classMasteryPct": { "type": "number" },
+        "recommendedFocus": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "suggestedActivity": { "type": "string", "minLength": 1, "maxLength": 600 },
+        "aiOutline": { "type": "object" },
+        "status": { "type": "string", "enum": ["approved", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "teacherUid", "conceptId", "conceptName", "classMasteryPct", "recommendedFocus", "suggestedActivity", "status", "createdAt", "updatedAt"]
+    },
+    "TutorDoubtEntry": {
+      "title": "TutorDoubtEntry",
+      "description": "Saved English & Kannada AI tutor explanation or student doubt grounded in classroom study material.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "materialId": { "type": "string", "maxLength": 128 },
+        "materialTitle": { "type": "string", "maxLength": 160 },
+        "question": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "answerEn": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "answerKn": { "type": "string", "maxLength": 4000 },
+        "language": { "type": "string", "enum": ["en", "kn"] },
+        "entryType": { "type": "string", "enum": ["doubt", "explanation"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "studentUid", "teacherUid", "materialId", "materialTitle", "question", "answerEn", "language", "entryType", "createdAt"]
+    },
+    "RevisionTaskProgress": {
+      "title": "RevisionTaskProgress",
+      "description": "Student completion status and reflection notes for weak-concept revision activities.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "matchedMaterialId": { "type": "string", "maxLength": 128 },
+        "matchedMaterialTitle": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "enum": ["pending", "completed"] },
+        "reflectionNote": { "type": "string", "maxLength": 600 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "studentUid", "teacherUid", "conceptId", "conceptName", "status", "updatedAt", "createdAt"]
+    },
+    "MaterialEngagement": {
+      "title": "MaterialEngagement",
+      "description": "Tracks student study note reading and completion status per uploaded classroom material.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "materialId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "status": { "type": "string", "enum": ["viewed", "completed"] },
+        "viewCount": { "type": "number" },
+        "lastViewedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "materialId", "classroomId", "teacherUid", "studentUid", "studentName", "status", "viewCount", "lastViewedAt", "createdAt"]
+    },
+    "ClassroomActivity": {
+      "title": "ClassroomActivity",
+      "description": "Scheduled classroom learning activity such as lab, revision clinic, discussion, or assignment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "studentUids": { "type": "array" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "activityType": { "type": "string", "enum": ["lab", "revision_clinic", "discussion", "assignment"] },
+        "scheduledDate": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "classroomName", "teacherUid", "studentUids", "title", "activityType", "scheduledDate", "description", "completed", "createdAt"]
+    },
+    "QuestionBankItem": {
+      "title": "QuestionBankItem",
+      "description": "Teacher-curated reusable question bank item mapped to a specific curriculum concept.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "teacherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "conceptId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "prompt": { "type": "string", "minLength": 3, "maxLength": 1000 },
+        "type": { "type": "string", "enum": ["mcq", "short_answer"] },
+        "options": { "type": "array" },
+        "correctAnswer": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "explanation": { "type": "string", "maxLength": 1000 },
+        "points": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherUid", "subject", "conceptId", "conceptName", "prompt", "type", "correctAnswer", "explanation", "points", "createdAt"]
+    },
+    "StudentStudyNote": {
+      "title": "StudentStudyNote",
+      "description": "Personal student study note in English or Kannada linked to a classroom and optional concept.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "classroomId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "conceptId": { "type": "string", "maxLength": 128 },
+        "conceptName": { "type": "string", "maxLength": 160 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "content": { "type": "string", "minLength": 2, "maxLength": 4000 },
+        "language": { "type": "string", "enum": ["en", "kn"] },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classroomId", "studentUid", "title", "content", "language", "updatedAt", "createdAt"]
+    },
+    "CurriculumTopicProgress": {
+      "title": "CurriculumTopicProgress",
+      "description": "Per-student DBMS curriculum topic completion tracking and last viewed topic.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "curriculumId": { "type": "string", "minLength": 2, "maxLength": 64 },
+        "completedTopicIds": { "type": "array" },
+        "lastViewedTopicId": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentUid", "curriculumId", "completedTopicIds", "updatedAt", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-only user profile and immutable role assignment"
+    },
+    "/teacherAllowlist/{emailId}": {
+      "schema": { "$ref": "#/entities/TeacherAllowlistEntry" },
+      "description": "Authorized faculty emails permitted to register Teacher accounts"
+    },
+    "/classrooms/{classroomId}": {
+      "schema": { "$ref": "#/entities/Classroom" },
+      "description": "Classroom metadata and enrolled student UID membership"
+    },
+    "/classrooms/{classroomId}/roster/{studentUid}": {
+      "schema": { "$ref": "#/entities/ClassroomRosterEntry" },
+      "description": "Isolated student PII roster entries per classroom"
+    },
+    "/classroomInvites/{joinCode}": {
+      "schema": { "$ref": "#/entities/ClassroomInvite" },
+      "description": "Exact-code classroom invite lookup without student PII"
+    },
+    "/enrollments/{enrollmentId}": {
+      "schema": { "$ref": "#/entities/ClassroomEnrollment" },
+      "description": "Student-classroom enrollment mapping records"
+    },
+    "/materials/{materialId}": {
+      "schema": { "$ref": "#/entities/StudyMaterial" },
+      "description": "Classroom PDF notes and extracted concept taxonomy"
+    },
+    "/assessments/{assessmentId}": {
+      "schema": { "$ref": "#/entities/Assessment" },
+      "description": "Teacher-only master tests with drafts and answer keys"
+    },
+    "/publishedAssessments/{assessmentId}": {
+      "schema": { "$ref": "#/entities/PublishedAssessment" },
+      "description": "Student-safe published assessments stripped of answer keys and unpublished questions"
+    },
+    "/assessmentAnswerKeys/{assessmentId}": {
+      "schema": { "$ref": "#/entities/AssessmentAnswerKey" },
+      "description": "Answer keys readable only by teacher or student after immutable submission lock"
+    },
+    "/submissionLocks/{lockId}": {
+      "schema": { "$ref": "#/entities/SubmissionLock" },
+      "description": "Immutable student answer commit lock for anti-peek and duplicate prevention"
+    },
+    "/submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/AssessmentSubmission" },
+      "description": "Immutable evaluated student assessment submissions"
+    },
+    "/conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/Conversation" },
+      "description": "Real-time direct and classroom conversation metadata"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Immutable conversation messages with participant read receipts"
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "Teacher-published classroom announcements readable by enrolled students"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "User-scoped real-time notifications"
+    },
+    "/attendanceSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/AttendanceSession" },
+      "description": "Classroom attendance roll records created by teachers and readable by enrolled students"
+    },
+    "/lessonPlans/{planId}": {
+      "schema": { "$ref": "#/entities/PersistedLessonPlan" },
+      "description": "Teacher-approved next-lesson plans and Sarvam AI 30-min outlines"
+    },
+    "/tutorDoubts/{doubtId}": {
+      "schema": { "$ref": "#/entities/TutorDoubtEntry" },
+      "description": "Persisted bilingual English/Kannada tutor doubts and explanations"
+    },
+    "/revisionTasks/{taskId}": {
+      "schema": { "$ref": "#/entities/RevisionTaskProgress" },
+      "description": "Student completion status for personalized weak-concept revision tasks"
+    },
+    "/materialEngagements/{engagementId}": {
+      "schema": { "$ref": "#/entities/MaterialEngagement" },
+      "description": "Student reading progress per study material"
+    },
+    "/classroomActivities/{activityId}": {
+      "schema": { "$ref": "#/entities/ClassroomActivity" },
+      "description": "Scheduled classroom labs, revision clinics, discussions, and assignments"
+    },
+    "/questionBank/{itemId}": {
+      "schema": { "$ref": "#/entities/QuestionBankItem" },
+      "description": "Teacher-private reusable concept-tagged question bank"
+    },
+    "/studentNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/StudentStudyNote" },
+      "description": "Student-owned bilingual revision notebook entries"
+    },
+    "/curriculumProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/CurriculumTopicProgress" },
+      "description": "Per-student curriculum topic completion records"
+    }
+  }
+}
